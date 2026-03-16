@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "researcher"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[project.scripts]
+researcher-search  = "tools.duckduckgo:cli"
+researcher-browse  = "tools.browser:cli"
+researcher-wiki    = "tools.wiki:cli"
+researcher-polona  = "tools.polona:cli"
+researcher-dane    = "tools.dane_gov:cli"
+researcher-firecrawl = "tools.firecrawl:cli"
+researcher-list    = "researcher:cli_list"
+researcher-export  = "researcher:cli_export"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tools*"]
+
+[tool.setuptools]
+py-modules = ["researcher"]

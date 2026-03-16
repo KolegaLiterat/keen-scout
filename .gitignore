@@ -1,0 +1,25 @@
+# Environment & secrets
+.env
+
+# Research data (user-specific)
+queries/
+docs/
+.memory/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# macOS
+.DS_Store
+.Ulysses-Group.plist
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Editor
+.idea/
+.vscode/
