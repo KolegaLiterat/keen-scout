@@ -2,6 +2,13 @@
 
 A Claude Code skill and toolkit for autonomous multi-source research. Given a query, it launches parallel sub-agents that search the web, encyclopedia, and public datasets — then synthesizes everything into a structured Markdown report with optional charts, infographics, and DOCX/PDF export.
 
+## Demo
+
+<!-- After creating the repo: open any Issue, drag & drop keen_scout_at_work.mp4, copy the generated URL and replace the src below -->
+<video src="REPLACE_WITH_GITHUB_ASSET_URL" controls width="100%"></video>
+
+---
+
 ## How it works
 
 Invoke with `/researcher <query>` inside Claude Code. The agent will:
