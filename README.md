@@ -85,6 +85,15 @@ queries/
       infographic.png
 ```
 
+## Examples
+
+Two completed research reports are included in [`examples_of_finished_queries/`](./examples_of_finished_queries/):
+
+- **[Steam games market report 2025](./examples_of_finished_queries/2026-03-15_gry-steam-2025-raport/answer.md)** — quantitative market analysis with data from 21,473 games
+- **[Oscars 2026 summary](./examples_of_finished_queries/2026-03-16_oscary-2026-podsumowanie/answer.md)** — event coverage with infographic
+
+---
+
 ## Notes on regional tools
 
 `researcher-polona` and `researcher-dane` are oriented towards Polish open data sources. They can be replaced or supplemented with equivalents for other countries.

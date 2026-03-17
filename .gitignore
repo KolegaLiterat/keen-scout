@@ -16,6 +16,7 @@ __pycache__/
 # macOS
 .DS_Store
 .Ulysses-Group.plist
+.Ulysses-Group.plist
 
 # Claude Code local settings
 .claude/settings.local.json
