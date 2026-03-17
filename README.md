@@ -4,8 +4,7 @@ A Claude Code skill and toolkit for autonomous multi-source research. Given a qu
 
 ## Demo
 
-<!-- After creating the repo: open any Issue, drag & drop keen_scout_at_work.mp4, copy the generated URL and replace the src below -->
-<video src="REPLACE_WITH_GITHUB_ASSET_URL" controls width="100%"></video>
+[![Demo](https://img.youtube.com/vi/woooaAxK1A8/maxresdefault.jpg)](https://youtu.be/woooaAxK1A8)
 
 ---
 
