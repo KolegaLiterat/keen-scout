@@ -1,4 +1,4 @@
-# Researcher
+# Keen Scout
 
 A Claude Code skill and toolkit for autonomous multi-source research. Given a query, it launches parallel sub-agents that search the web, encyclopedia, and public datasets — then synthesizes everything into a structured Markdown report with optional charts, infographics, and DOCX/PDF export.
 
