@@ -167,9 +167,9 @@ Wait for results from all sub-agents. Assess whether you have sufficient informa
 
 ## STEP 5b — Round 2: Deep Content (if needed)
 
-If you have valuable URLs from round 1 and full content is missing — launch sub-agent 4 via the Agent tool.
+If you have valuable URLs from round 1 and full content is missing — launch sub-agent 5 via the Agent tool.
 
-### Sub-agent 4 — Deep Content
+### Sub-agent 5 — Deep Content
 
 ```
 You are a research sub-agent. Fetch the full content of the given pages using the Bash tool. Do NOT answer from your own knowledge. RUN THE COMMANDS.
