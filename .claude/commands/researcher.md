@@ -178,12 +178,17 @@ Wait for the user's response.
 ```
 You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
 
+Default (no schema):
 cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-mini --max-credits 500 --max 6000
 
-If the topic is complex or analytical, use spark-1-pro instead:
-cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-pro --max-credits 800 --max 6000
+If the topic has clearly structured, tabular data (e.g. product comparisons, rankings, statistics across sources) — pass a JSON schema to get structured output directly usable as a Markdown table:
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-mini --max-credits 500 --max 6000 --schema '{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"value":{"type":"string"},"source":{"type":"string"}}}}}}'
 
-Return: the full final_answer and the list of sources.
+Adjust the schema properties to match the actual data shape of the topic.
+
+If the topic is complex or analytical, use spark-1-pro instead (replace spark-1-mini).
+
+Return: the full final_answer, structured data (if present), and the list of sources.
 ```
 
 ---
@@ -264,6 +269,8 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## STEP 7 — Write the document
 
+Assign a sequential number to every source before writing. Use inline citations `[N]` in the text whenever you state a fact, number, or claim derived from a specific source.
+
 ### answer.md:
 
 ```markdown
@@ -275,9 +282,9 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## Key findings
 
-- **[Finding 1]** — elaboration
-- **[Finding 2]** — elaboration
-- **[Finding 3]** — elaboration
+- **[Finding 1]** — elaboration [1]
+- **[Finding 2]** — elaboration [2][3]
+- **[Finding 3]** — elaboration [1]
 
 ---
 
@@ -288,7 +295,11 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## [Section 1]
 
-Content. Tables and lists where appropriate.
+Content with inline citations [1]. Tables and lists where appropriate.
+
+| Column A | Column B | Source |
+|---|---|---|
+| value | value | [2] |
 
 ## [Section 2]
 
@@ -300,6 +311,14 @@ Content. Tables and lists where appropriate.
 
 ---
 
+## References
+
+1. [Title](URL)
+2. [Title](URL)
+3. [Title](URL)
+
+---
+
 *Generated: [date] | Sources: [N] | Rounds: [N] | Query: "$ARGUMENTS"*
 ```
 
@@ -308,20 +327,16 @@ Content. Tables and lists where appropriate.
 ```markdown
 # Sources — [Title]
 
-## Websites
-- [Title](URL) — what was found
-
-## Wikipedia
-- [Article](URL)
-
-## Public data
-- [Dataset](URL)
+1. [Title](URL) — what was found — *Web*
+2. [Article](URL) — *Wikipedia*
+3. [Dataset](URL) — *Public data*
+4. [Paper title](https://arxiv.org/abs/...) — *arXiv*
 
 ---
 *Total: [N] sources*
 ```
 
-Rules: abstract max 3 sentences with numbers, logical sections, data in tables, no filler phrases.
+Rules: abstract max 3 sentences with numbers, every factual claim gets an inline `[N]` citation, structured data goes into Markdown tables (especially when sourced from Firecrawl Agent with schema), no filler phrases.
 
 ---
 

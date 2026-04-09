@@ -112,6 +112,7 @@ def search_and_scrape(query: str, limit: int = 3) -> list[dict]:
 def agent_search(
     prompt: str,
     urls: list[str] | None = None,
+    schema: dict | None = None,
     model: str = "spark-1-mini",
     max_credits: int = 500,
     poll_interval: float = 3.0,
@@ -124,13 +125,14 @@ def agent_search(
     Args:
         prompt: Natural language description of the data to collect
         urls: Optional list of URLs to search within
+        schema: Optional JSON Schema dict for structured output
         model: "spark-1-mini" (faster, cheaper) or "spark-1-pro" (complex analysis)
         max_credits: Credit limit for this request (default 500)
         poll_interval: Seconds between status polls
         timeout: Maximum seconds to wait
 
     Returns:
-        Dict with final_answer, sources, and raw data
+        Dict with final_answer, sources, structured (if schema provided), and raw data
     """
     payload: dict = {
         "prompt": prompt,
@@ -139,6 +141,8 @@ def agent_search(
     }
     if urls:
         payload["urls"] = urls
+    if schema:
+        payload["schema"] = schema
 
     response = requests.post(f"{BASE_URL}/agent", headers=_headers(), json=payload, timeout=30)
     response.raise_for_status()
@@ -155,6 +159,7 @@ def agent_search(
         return {
             "final_answer": result.get("finalAnswer") or result.get("final_answer", ""),
             "sources": result.get("sources", []),
+            "structured": result.get("structuredData") or result.get("structured"),
             "data": result,
         }
 
@@ -172,6 +177,7 @@ def agent_search(
             return {
                 "final_answer": result.get("finalAnswer") or result.get("final_answer", ""),
                 "sources": result.get("sources", []),
+                "structured": result.get("structuredData") or result.get("structured"),
                 "data": result,
             }
         if status in ("failed", "error"):
@@ -182,9 +188,12 @@ def agent_search(
 
 def agent_cli():
     import argparse
+    import json
     parser = argparse.ArgumentParser(description="Firecrawl autonomous research agent")
     parser.add_argument("prompt", help="Research prompt / question")
     parser.add_argument("--urls", nargs="+", metavar="URL", help="Optional seed URLs")
+    parser.add_argument("--schema", metavar="JSON",
+                        help="JSON Schema string for structured output (e.g. '{\"properties\":{...}}')")
     parser.add_argument("--model", default="spark-1-mini",
                         choices=["spark-1-mini", "spark-1-pro"],
                         help="Agent model (default: spark-1-mini)")
@@ -196,15 +205,22 @@ def agent_cli():
                         help="Max characters of final_answer to print (default 5000)")
     args = parser.parse_args()
 
+    schema = json.loads(args.schema) if args.schema else None
+
     result = agent_search(
         prompt=args.prompt,
         urls=args.urls,
+        schema=schema,
         model=args.model,
         max_credits=args.max_credits,
         timeout=args.timeout,
     )
 
     print(result["final_answer"][:args.max_length])
+
+    if result.get("structured"):
+        print("\n--- Structured data ---")
+        print(json.dumps(result["structured"], indent=2, ensure_ascii=False))
 
     if result["sources"]:
         print("\n--- Sources ---")
