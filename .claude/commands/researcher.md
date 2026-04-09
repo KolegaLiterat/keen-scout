@@ -75,6 +75,7 @@ Analyze **"$ARGUMENTS"** and decide which sub-agents to launch in round 1:
 | **Encyclopedia** | Always (Wikipedia) + archive sources if the topic is historical (pre-1950) |
 | **Data & Stats** | If the topic involves statistics, public datasets, or official reports |
 | **Firecrawl Agent** | When the topic is broad, open-ended, or requires comparing many sources (e.g. competitive research, market overviews, technology comparisons). Use `--model spark-1-pro` for complex analytical topics. |
+| **Academic Papers** | If the topic is scientific, technical, medical, or involves research studies — launch alongside Web Search in round 1 |
 | **Deep Content** | Round 2 — after obtaining URLs from Web Search |
 
 Plan a maximum of 3 rounds. Record the plan internally (do not ask for approval).
@@ -146,17 +147,48 @@ Return: found datasets, numbers, links to resources.
 
 ---
 
-### Sub-agent 4 — Firecrawl Agent (launch only when planned in STEP 4)
+### Sub-agent 4 — Academic Papers (launch only when planned in STEP 4)
 
 ```
 You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
 
+Step 1 — search and print abstracts:
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --abstract
+
+Return: list of papers with titles, authors, dates, URLs and abstracts. Do NOT download any PDFs — the main agent will ask the user first.
+```
+
+After receiving results from Sub-agent 4, **pause and ask the user**:
+
+> Found [N] papers on arXiv (e.g. "[title 1]", "[title 2]", ...).
+> Should I download and analyse the top 2 PDFs? ⚠️ This may consume a significant number of tokens.
+
+Wait for the user's response.
+- **Yes** → download PDFs (replace FOLDER_PATH with the actual path from STEP 3) and read their content:
+  ```
+  cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --download-dir FOLDER_PATH --download-max 2
+  ```
+  Then read the downloaded PDFs from `FOLDER_PATH/papers/` and include their content in the synthesis.
+- **No** → continue with abstracts only.
+
+---
+
+### Sub-agent 5 — Firecrawl Agent (launch only when planned in STEP 4)
+
+```
+You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
+
+Default (no schema):
 cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-mini --max-credits 500 --max 6000
 
-If the topic is complex or analytical, use spark-1-pro instead:
-cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-pro --max-credits 800 --max 6000
+If the topic has clearly structured, tabular data (e.g. product comparisons, rankings, statistics across sources) — pass a JSON schema to get structured output directly usable as a Markdown table:
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-mini --max-credits 500 --max 6000 --schema '{"type":"object","properties":{"items":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"value":{"type":"string"},"source":{"type":"string"}}}}}}'
 
-Return: the full final_answer and the list of sources.
+Adjust the schema properties to match the actual data shape of the topic.
+
+If the topic is complex or analytical, use spark-1-pro instead (replace spark-1-mini).
+
+Return: the full final_answer, structured data (if present), and the list of sources.
 ```
 
 ---
@@ -167,9 +199,9 @@ Wait for results from all sub-agents. Assess whether you have sufficient informa
 
 ## STEP 5b — Round 2: Deep Content (if needed)
 
-If you have valuable URLs from round 1 and full content is missing — launch sub-agent 5 via the Agent tool.
+If you have valuable URLs from round 1 and full content is missing — launch sub-agent 6 via the Agent tool.
 
-### Sub-agent 5 — Deep Content
+### Sub-agent 6 — Deep Content
 
 ```
 You are a research sub-agent. Fetch the full content of the given pages using the Bash tool. Do NOT answer from your own knowledge. RUN THE COMMANDS.
@@ -237,6 +269,8 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## STEP 7 — Write the document
 
+Assign a sequential number to every source before writing. Use inline citations `[N]` in the text whenever you state a fact, number, or claim derived from a specific source.
+
 ### answer.md:
 
 ```markdown
@@ -248,9 +282,9 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## Key findings
 
-- **[Finding 1]** — elaboration
-- **[Finding 2]** — elaboration
-- **[Finding 3]** — elaboration
+- **[Finding 1]** — elaboration [1]
+- **[Finding 2]** — elaboration [2][3]
+- **[Finding 3]** — elaboration [1]
 
 ---
 
@@ -261,7 +295,11 @@ If no numeric data and visualization would not enrich the document → skip.
 
 ## [Section 1]
 
-Content. Tables and lists where appropriate.
+Content with inline citations [1]. Tables and lists where appropriate.
+
+| Column A | Column B | Source |
+|---|---|---|
+| value | value | [2] |
 
 ## [Section 2]
 
@@ -273,6 +311,14 @@ Content. Tables and lists where appropriate.
 
 ---
 
+## References
+
+1. [Title](URL)
+2. [Title](URL)
+3. [Title](URL)
+
+---
+
 *Generated: [date] | Sources: [N] | Rounds: [N] | Query: "$ARGUMENTS"*
 ```
 
@@ -281,20 +327,16 @@ Content. Tables and lists where appropriate.
 ```markdown
 # Sources — [Title]
 
-## Websites
-- [Title](URL) — what was found
-
-## Wikipedia
-- [Article](URL)
-
-## Public data
-- [Dataset](URL)
+1. [Title](URL) — what was found — *Web*
+2. [Article](URL) — *Wikipedia*
+3. [Dataset](URL) — *Public data*
+4. [Paper title](https://arxiv.org/abs/...) — *arXiv*
 
 ---
 *Total: [N] sources*
 ```
 
-Rules: abstract max 3 sentences with numbers, logical sections, data in tables, no filler phrases.
+Rules: abstract max 3 sentences with numbers, every factual claim gets an inline `[N]` citation, structured data goes into Markdown tables (especially when sourced from Firecrawl Agent with schema), no filler phrases.
 
 ---
 
@@ -339,8 +381,8 @@ Display the full content of `answer.md` in the chat. Provide the folder path. If
 
 - **Match the query language** — detect the language of `$ARGUMENTS` and write everything (answer.md, sources.md, all messages) in that language
 - **Work autonomously** — do not ask for confirmation, just execute
-- **Only three user inputs:** docs/ hit (STEP 1), memory hit (STEP 2), and export (STEP 9)
-- **Sub-agents must use CLI** — `researcher-search`, `researcher-firecrawl`, `researcher-browse`, `researcher-wiki`, `researcher-polona`, `researcher-dane`
+- **Only four user inputs:** docs/ hit (STEP 1), memory hit (STEP 2), arXiv PDF download confirmation (STEP 5), and export (STEP 9)
+- **Sub-agents must use CLI** — `researcher-search`, `researcher-firecrawl`, `researcher-browse`, `researcher-wiki`, `researcher-polona`, `researcher-dane`, `researcher-arxiv`
 - **Two search engines** — DuckDuckGo (free, broad coverage) + Firecrawl (paid, higher quality + `--scrape` delivers ready Markdown)
 - **Firecrawl Agent for broad topics** — use `researcher-firecrawl-agent` when research requires comparing many sources autonomously; prefer `spark-1-mini` by default, `spark-1-pro` only for complex analytical queries
 - **Max 3 rounds** — after 3 rounds synthesize what you have
