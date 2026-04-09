@@ -150,16 +150,26 @@ Return: found datasets, numbers, links to resources.
 ### Sub-agent 4 — Academic Papers (launch only when planned in STEP 4)
 
 ```
-You are a research sub-agent. Your only task is to run the following commands via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMANDS.
+You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
 
 Step 1 — search and print abstracts:
 cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --abstract
 
-Step 2 — download top 2 PDFs to the query folder (replace FOLDER_PATH with the actual path from STEP 3):
-cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --download-dir FOLDER_PATH --download-max 2
-
-Return: list of papers with titles, authors, dates, URLs and abstracts. Report which PDFs were downloaded and their paths.
+Return: list of papers with titles, authors, dates, URLs and abstracts. Do NOT download any PDFs — the main agent will ask the user first.
 ```
+
+After receiving results from Sub-agent 4, **pause and ask the user**:
+
+> Found [N] papers on arXiv (e.g. "[title 1]", "[title 2]", ...).
+> Should I download and analyse the top 2 PDFs? ⚠️ This may consume a significant number of tokens.
+
+Wait for the user's response.
+- **Yes** → download PDFs (replace FOLDER_PATH with the actual path from STEP 3) and read their content:
+  ```
+  cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --download-dir FOLDER_PATH --download-max 2
+  ```
+  Then read the downloaded PDFs from `FOLDER_PATH/papers/` and include their content in the synthesis.
+- **No** → continue with abstracts only.
 
 ---
 
@@ -356,7 +366,7 @@ Display the full content of `answer.md` in the chat. Provide the folder path. If
 
 - **Match the query language** — detect the language of `$ARGUMENTS` and write everything (answer.md, sources.md, all messages) in that language
 - **Work autonomously** — do not ask for confirmation, just execute
-- **Only three user inputs:** docs/ hit (STEP 1), memory hit (STEP 2), and export (STEP 9)
+- **Only four user inputs:** docs/ hit (STEP 1), memory hit (STEP 2), arXiv PDF download confirmation (STEP 5), and export (STEP 9)
 - **Sub-agents must use CLI** — `researcher-search`, `researcher-firecrawl`, `researcher-browse`, `researcher-wiki`, `researcher-polona`, `researcher-dane`, `researcher-arxiv`
 - **Two search engines** — DuckDuckGo (free, broad coverage) + Firecrawl (paid, higher quality + `--scrape` delivers ready Markdown)
 - **Firecrawl Agent for broad topics** — use `researcher-firecrawl-agent` when research requires comparing many sources autonomously; prefer `spark-1-mini` by default, `spark-1-pro` only for complex analytical queries
