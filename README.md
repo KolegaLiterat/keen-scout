@@ -14,7 +14,7 @@ Invoke with `/researcher <query>` inside Claude Code. The agent will:
 
 1. Check vector memory for similar past research
 2. Check the `docs/` folder for relevant local documents
-3. Launch parallel sub-agents (web search, encyclopedia, data, Firecrawl Agent for broad topics)
+3. Launch parallel sub-agents (web search, encyclopedia, academic papers, data, Firecrawl Agent for broad topics)
 4. Run up to 3 research rounds
 5. Optionally generate a chart (Datawrapper) or infographic (Krea)
 6. Write `answer.md` + `sources.md` to `queries/<slug>/`
@@ -75,6 +75,7 @@ researcher-polona "query" [--size 10] [--sort oldest]   # Polish National Librar
 researcher-dane "query" [--per-page 5] [--resources]    # Polish open data portal
 researcher-firecrawl "query" [--limit 5] [--scrape]
 researcher-firecrawl-agent "query" [--model spark-1-mini|spark-1-pro] [--max-credits 500]
+researcher-arxiv "query" [--max 5] [--sort relevance|lastUpdatedDate] [--abstract]
 researcher-list
 researcher-export <slug> [--docx] [--pdf]
 ```

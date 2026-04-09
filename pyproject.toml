@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "researcher"
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.12"
 
 [project.scripts]
@@ -15,6 +15,7 @@ researcher-polona  = "tools.polona:cli"
 researcher-dane    = "tools.dane_gov:cli"
 researcher-firecrawl = "tools.firecrawl:cli"
 researcher-firecrawl-agent = "tools.firecrawl:agent_cli"
+researcher-arxiv = "tools.arxiv:cli"
 researcher-list    = "researcher:cli_list"
 researcher-export  = "researcher:cli_export"
 
