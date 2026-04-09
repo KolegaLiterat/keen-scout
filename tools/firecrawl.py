@@ -1,9 +1,11 @@
 """
 Web search and scraping tool using Firecrawl API.
 Documentation: https://docs.firecrawl.dev/features/search
+             https://docs.firecrawl.dev/features/agent
 """
 
 import os
+import time
 import requests
 from dotenv import load_dotenv
 
@@ -105,6 +107,112 @@ def search_and_scrape(query: str, limit: int = 3) -> list[dict]:
         except Exception:
             enriched.append(r)
     return enriched
+
+
+def agent_search(
+    prompt: str,
+    urls: list[str] | None = None,
+    model: str = "spark-1-mini",
+    max_credits: int = 500,
+    poll_interval: float = 3.0,
+    timeout: int = 120,
+) -> dict:
+    """
+    Autonomous research agent — searches and gathers data from multiple sources.
+    Documentation: https://docs.firecrawl.dev/features/agent
+
+    Args:
+        prompt: Natural language description of the data to collect
+        urls: Optional list of URLs to search within
+        model: "spark-1-mini" (faster, cheaper) or "spark-1-pro" (complex analysis)
+        max_credits: Credit limit for this request (default 500)
+        poll_interval: Seconds between status polls
+        timeout: Maximum seconds to wait
+
+    Returns:
+        Dict with final_answer, sources, and raw data
+    """
+    payload: dict = {
+        "prompt": prompt,
+        "model": model,
+        "maxCredits": max_credits,
+    }
+    if urls:
+        payload["urls"] = urls
+
+    response = requests.post(f"{BASE_URL}/agent", headers=_headers(), json=payload, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+
+    if not data.get("success"):
+        raise RuntimeError(f"Firecrawl agent error: {data.get('error')}")
+
+    job_id = data.get("jobId") or data.get("id")
+
+    # Synchronous response (no job id) — return immediately
+    if not job_id:
+        result = data.get("data", data)
+        return {
+            "final_answer": result.get("finalAnswer") or result.get("final_answer", ""),
+            "sources": result.get("sources", []),
+            "data": result,
+        }
+
+    # Async — poll until complete
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(poll_interval)
+        poll = requests.get(f"{BASE_URL}/agent/{job_id}", headers=_headers(), timeout=30)
+        poll.raise_for_status()
+        poll_data = poll.json()
+
+        status = poll_data.get("status", "")
+        if status in ("completed", "done", "success", ""):
+            result = poll_data.get("data", poll_data)
+            return {
+                "final_answer": result.get("finalAnswer") or result.get("final_answer", ""),
+                "sources": result.get("sources", []),
+                "data": result,
+            }
+        if status in ("failed", "error"):
+            raise RuntimeError(f"Firecrawl agent failed: {poll_data.get('error')}")
+
+    raise TimeoutError(f"Firecrawl agent timed out after {timeout}s (job: {job_id})")
+
+
+def agent_cli():
+    import argparse
+    parser = argparse.ArgumentParser(description="Firecrawl autonomous research agent")
+    parser.add_argument("prompt", help="Research prompt / question")
+    parser.add_argument("--urls", nargs="+", metavar="URL", help="Optional seed URLs")
+    parser.add_argument("--model", default="spark-1-mini",
+                        choices=["spark-1-mini", "spark-1-pro"],
+                        help="Agent model (default: spark-1-mini)")
+    parser.add_argument("--max-credits", type=int, default=500, dest="max_credits",
+                        help="Credit limit (default 500)")
+    parser.add_argument("--timeout", type=int, default=120,
+                        help="Max seconds to wait (default 120)")
+    parser.add_argument("--max", type=int, default=5000, dest="max_length",
+                        help="Max characters of final_answer to print (default 5000)")
+    args = parser.parse_args()
+
+    result = agent_search(
+        prompt=args.prompt,
+        urls=args.urls,
+        model=args.model,
+        max_credits=args.max_credits,
+        timeout=args.timeout,
+    )
+
+    print(result["final_answer"][:args.max_length])
+
+    if result["sources"]:
+        print("\n--- Sources ---")
+        for s in result["sources"]:
+            if isinstance(s, dict):
+                print(f"  {s.get('title', '')}  {s.get('url', s)}")
+            else:
+                print(f"  {s}")
 
 
 def cli():

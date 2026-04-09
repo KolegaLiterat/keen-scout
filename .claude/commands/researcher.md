@@ -74,6 +74,7 @@ Analyze **"$ARGUMENTS"** and decide which sub-agents to launch in round 1:
 | **Web Search** | Always |
 | **Encyclopedia** | Always (Wikipedia) + archive sources if the topic is historical (pre-1950) |
 | **Data & Stats** | If the topic involves statistics, public datasets, or official reports |
+| **Firecrawl Agent** | When the topic is broad, open-ended, or requires comparing many sources (e.g. competitive research, market overviews, technology comparisons). Use `--model spark-1-pro` for complex analytical topics. |
 | **Deep Content** | Round 2 — after obtaining URLs from Web Search |
 
 Plan a maximum of 3 rounds. Record the plan internally (do not ask for approval).
@@ -145,15 +146,30 @@ Return: found datasets, numbers, links to resources.
 
 ---
 
+### Sub-agent 4 — Firecrawl Agent (launch only when planned in STEP 4)
+
+```
+You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
+
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-mini --max-credits 500 --max 6000
+
+If the topic is complex or analytical, use spark-1-pro instead:
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-firecrawl-agent "$ARGUMENTS" --model spark-1-pro --max-credits 800 --max 6000
+
+Return: the full final_answer and the list of sources.
+```
+
+---
+
 Wait for results from all sub-agents. Assess whether you have sufficient information.
 
 ---
 
 ## STEP 5b — Round 2: Deep Content (if needed)
 
-If you have valuable URLs from round 1 and full content is missing — launch sub-agent 4 via the Agent tool.
+If you have valuable URLs from round 1 and full content is missing — launch sub-agent 5 via the Agent tool.
 
-### Sub-agent 4 — Deep Content
+### Sub-agent 5 — Deep Content
 
 ```
 You are a research sub-agent. Fetch the full content of the given pages using the Bash tool. Do NOT answer from your own knowledge. RUN THE COMMANDS.
@@ -326,6 +342,7 @@ Display the full content of `answer.md` in the chat. Provide the folder path. If
 - **Only three user inputs:** docs/ hit (STEP 1), memory hit (STEP 2), and export (STEP 9)
 - **Sub-agents must use CLI** — `researcher-search`, `researcher-firecrawl`, `researcher-browse`, `researcher-wiki`, `researcher-polona`, `researcher-dane`
 - **Two search engines** — DuckDuckGo (free, broad coverage) + Firecrawl (paid, higher quality + `--scrape` delivers ready Markdown)
+- **Firecrawl Agent for broad topics** — use `researcher-firecrawl-agent` when research requires comparing many sources autonomously; prefer `spark-1-mini` by default, `spark-1-pro` only for complex analytical queries
 - **Max 3 rounds** — after 3 rounds synthesize what you have
 - **Parallel** — independent sub-agents always in a single message
 - **Deep Content in round 2** — depends on URLs from Web Search

@@ -14,6 +14,7 @@ researcher-wiki    = "tools.wiki:cli"
 researcher-polona  = "tools.polona:cli"
 researcher-dane    = "tools.dane_gov:cli"
 researcher-firecrawl = "tools.firecrawl:cli"
+researcher-firecrawl-agent = "tools.firecrawl:agent_cli"
 researcher-list    = "researcher:cli_list"
 researcher-export  = "researcher:cli_export"
 
