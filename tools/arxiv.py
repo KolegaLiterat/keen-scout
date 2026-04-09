@@ -5,6 +5,7 @@ No API key required.
 """
 
 import xml.etree.ElementTree as ET
+from pathlib import Path
 import requests
 
 BASE_URL = "https://export.arxiv.org/api/query"
@@ -74,6 +75,37 @@ def search(query: str, max_results: int = 5, sort_by: str = "relevance") -> list
     return results
 
 
+def download_pdf(arxiv_id: str, dest_dir: str | Path) -> Path:
+    """
+    Download a PDF from arXiv to dest_dir/papers/.
+
+    Args:
+        arxiv_id: arXiv paper ID (e.g. "2501.05032v2")
+        dest_dir: Query folder path (papers/ subfolder is created automatically)
+
+    Returns:
+        Path to the downloaded PDF file
+    """
+    papers_dir = Path(dest_dir) / "papers"
+    papers_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_id = arxiv_id.replace("/", "_")
+    dest = papers_dir / f"{safe_id}.pdf"
+
+    if dest.exists():
+        return dest
+
+    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+    response = requests.get(pdf_url, timeout=60, stream=True)
+    response.raise_for_status()
+
+    with open(dest, "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+
+    return dest
+
+
 def cli():
     import argparse
     parser = argparse.ArgumentParser(description="Search arXiv for academic papers")
@@ -85,6 +117,10 @@ def cli():
                         help="Sort order (default: relevance)")
     parser.add_argument("--abstract", action="store_true",
                         help="Print full abstract for each result")
+    parser.add_argument("--download-dir", metavar="PATH", dest="download_dir",
+                        help="Download PDFs of top results to PATH/papers/ (top 2 by default)")
+    parser.add_argument("--download-max", type=int, default=2, dest="download_max", metavar="N",
+                        help="How many PDFs to download (default 2, used with --download-dir)")
     args = parser.parse_args()
 
     results = search(args.query, max_results=args.max_results, sort_by=args.sort)
@@ -103,6 +139,15 @@ def cli():
         if args.abstract:
             print(f"   {r['abstract'][:400]}...")
         print()
+
+    if args.download_dir:
+        print(f"Downloading top {args.download_max} PDF(s) to {args.download_dir}/papers/...")
+        for r in results[:args.download_max]:
+            try:
+                path = download_pdf(r["id"], args.download_dir)
+                print(f"  OK  {path.name}  ({r['title'][:60]})")
+            except Exception as e:
+                print(f"  FAIL  {r['id']}: {e}")
 
 
 if __name__ == "__main__":

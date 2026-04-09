@@ -150,11 +150,15 @@ Return: found datasets, numbers, links to resources.
 ### Sub-agent 4 — Academic Papers (launch only when planned in STEP 4)
 
 ```
-You are a research sub-agent. Your only task is to run the following command via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMAND.
+You are a research sub-agent. Your only task is to run the following commands via the Bash tool and return the results. Do NOT answer from your own knowledge. Do NOT ask for confirmation. RUN THE COMMANDS.
 
+Step 1 — search and print abstracts:
 cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --abstract
 
-Return: list of papers with titles, authors, dates, URLs and abstracts. Highlight the most relevant ones.
+Step 2 — download top 2 PDFs to the query folder (replace FOLDER_PATH with the actual path from STEP 3):
+cd /Users/kolegaliterat/Desktop/researcher && .venv/bin/researcher-arxiv "$ARGUMENTS" --max 5 --download-dir FOLDER_PATH --download-max 2
+
+Return: list of papers with titles, authors, dates, URLs and abstracts. Report which PDFs were downloaded and their paths.
 ```
 
 ---
